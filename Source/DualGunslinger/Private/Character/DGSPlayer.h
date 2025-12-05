@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputActionValue.h"
 #include "GameFramework/Character.h"
 #include "DGSPlayer.generated.h"
 
@@ -20,6 +21,11 @@ public:
 	
 	UPROPERTY(VisibleAnywhere, Category="View")
 	class UCameraComponent* CameraComp;
+
+	UPROPERTY(VisibleAnywhere, Category="GunMesh")
+	class USkeletalMeshComponent* PistolMesh;
+	UPROPERTY(VisibleAnywhere, Category="GunMesh")
+	class USkeletalMeshComponent* RifleMesh;
 	
 protected:
 	// Called when the game starts or when spawned
@@ -32,16 +38,34 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-
+	
 private:
-	/*******************************************************/
-	/*						Input						   */
-	/*******************************************************/
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	class UInputMappingContext* InputMappingContext;
 
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	class UInputAction* IA_ChangeGun;
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	class UInputAction* IA_Move;
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	class UInputAction* IA_Shoot;
 	
 	void ChangeGun();
+	void Shoot(const FInputActionValue& InputActionValue);
+	void Move(const FInputActionValue& InputActionValue);
+	
+	FVector MoveDirection;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Character")
+	float MoveSpeed = 500.f;
+	UPROPERTY(EditDefaultsOnly, Category="Character")
+	float ShootRatio = 1.f;
+	float ShootTime=0.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Bullet")
+	TSubclassOf<class ABullet> BulletFactory;
+
+public:
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsRifleMode = true;
 };
