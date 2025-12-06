@@ -57,14 +57,25 @@ private:
 	FVector MoveDirection;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Character")
+	int32 Health = 6;
+	UPROPERTY(EditDefaultsOnly, Category="Character")
 	float MoveSpeed = 500.f;
 	UPROPERTY(EditDefaultsOnly, Category="Character")
 	float ShootRatio = 1.f;
 	float ShootTime=0.f;
+	UPROPERTY(EditDefaultsOnly, Category="Character")
+	float BulletSpeed = 320.f;
+	UPROPERTY(EditDefaultsOnly, Category="Character")
+	float BulletMaxDist = 1000.f;
 
 	UPROPERTY(EditDefaultsOnly, Category="Bullet")
-	TSubclassOf<class ABullet> BulletFactory;
+	TSubclassOf<class ABullet> PistolBulletClass;
 
+	UPROPERTY(EditDefaultsOnly, Category="Bullet")
+	TSubclassOf<class ABullet> RifleBulletClass;
+
+	UFUNCTION()
+	void PlayerOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 public:
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsRifleMode = true;

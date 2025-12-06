@@ -4,11 +4,15 @@
 #include "Character/DGSPlayer.h"
 
 #include "Bullet.h"
+#include "DGSMonster.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Components/CapsuleComponent.h"
+#include "DualGunslinger/DualGunslinger.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ADGSPlayer::ADGSPlayer()
@@ -65,6 +69,8 @@ void ADGSPlayer::BeginPlay()
 			SubSystem->AddMappingContext(InputMappingContext,0);
 		}
 	}
+
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ADGSPlayer::PlayerOverlap);
 }
 
 // Called every frame
@@ -116,6 +122,21 @@ void ADGSPlayer::Move(const FInputActionValue& InputActionValue)
 	AddMovementInput(GetActorForwardVector()*InputVal.X + GetActorRightVector()*InputVal.Y);
 }
 
+void ADGSPlayer::PlayerOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	ADGSMonster* Monster = Cast<ADGSMonster>(OtherActor);
+	if (Monster)
+	{
+		Health--;
+		UE_LOG(LogTemp,Warning,TEXT("Current HP = %d"), Health);
+		if (Health <= 0)
+		{
+			Destroy();
+		}
+	}
+}
+
 void ADGSPlayer::Shoot(const FInputActionValue& InputActionValue)
 {
 	FVector2D InputVal = InputActionValue.Get<FVector2D>();
@@ -136,13 +157,22 @@ void ADGSPlayer::Shoot(const FInputActionValue& InputActionValue)
 		const FVector MuzzleLocation = CurrentGunMesh->GetSocketLocation("Muzzle");
 		const FRotator MuzzleRotation = GetMesh()->GetComponentRotation() + FRotator(0.f,90.f,0.f);
 
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		SpawnParams.Instigator = this;
+		FTransform SpawnTrans(MuzzleRotation,MuzzleLocation);
+		
+		UClass* Bullet = bIsRifleMode ? RifleBulletClass : PistolBulletClass;
+		if (!Bullet)
+			return;
+		
+		ABullet* SpawnBullet = GetWorld()->SpawnActorDeferred<ABullet>(Bullet,SpawnTrans,this,this,ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+		if (SpawnBullet)
+		{
+			SpawnBullet->BulletType = bIsRifleMode ? EGunType::Rifle : EGunType::Pistol;
+			SpawnBullet->MaxDistance = BulletMaxDist;
+			SpawnBullet->MoveSpeed = BulletSpeed;
 
-		GetWorld()->SpawnActor<ABullet>(BulletFactory, MuzzleLocation, MuzzleRotation, SpawnParams);
-
-		ShootTime = 0.f;
+			UGameplayStatics::FinishSpawningActor(SpawnBullet,SpawnTrans);
+			ShootTime = 0.f;
+		}
 	}
 }
 
