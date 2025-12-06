@@ -30,6 +30,9 @@ void UMonsterFSM::IdleState()
 
 void UMonsterFSM::MoveState()
 {
+	if (!Target)
+		return;
+	
 	FVector Destination = Target->GetActorLocation();
 	FVector Direction = Destination - Me->GetActorLocation();
 	Me->AddMovementInput(Direction.GetSafeNormal(),MoveSpeedRate);
@@ -46,26 +49,14 @@ void UMonsterFSM::AttackState()
 	if (CurrentTime>AttackDelayTime)
 	{
 		CurrentTime = 0.f;
-		if ((Target->GetActorLocation() - Me->GetActorLocation()).Size() < AttackRange)
-		{
-			UE_LOG(LogTemp, Warning,TEXT("Attack"));
-		}
-		else
+		Target->GetDamaged();
+		if ((Target->GetActorLocation() - Me->GetActorLocation()).Size() > AttackRange)
 		{
 			mState=EEnemyState::Move;
 		}
 	}
 }
 
-void UMonsterFSM::DamageState()
-{
-	CurrentTime += GetWorld()->DeltaTimeSeconds;
-	if (CurrentTime>DamageDelayTime)
-	{
-		CurrentTime = 0.f;
-		mState=EEnemyState::Move;
-	}
-}
 
 void UMonsterFSM::DestroyOnLevel()
 {
@@ -74,9 +65,8 @@ void UMonsterFSM::DestroyOnLevel()
 
 void UMonsterFSM::DieState()
 {
-	GetWorld()->GetTimerManager().SetTimer(DestroyTimerHandle,this, &UMonsterFSM::DestroyOnLevel,1.f);
+	Me->SetActorLocation(Me->GetActorLocation() + FVector::DownVector*DieSpeed*GetWorld()->DeltaTimeSeconds);
 }
-
 
 // Called when the game starts
 void UMonsterFSM::BeginPlay()
@@ -93,8 +83,6 @@ void UMonsterFSM::BeginPlay()
 void UMonsterFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	FString logMsg = UEnum::GetValueAsString(mState);
-	GEngine->AddOnScreenDebugMessage(0,1,FColor::Cyan, logMsg);
 	
 	switch (mState)
 	{
@@ -107,9 +95,6 @@ void UMonsterFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorComp
 	case EEnemyState::Move:
 		MoveState();
 		break;
-	case EEnemyState::Damage:
-		DamageState();
-		break;
 	case EEnemyState::Die:
 		DieState();
 		break;
@@ -120,5 +105,7 @@ void UMonsterFSM::OnDamageProcess()
 {
 	mState=EEnemyState::Die;
 	Me->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Me->SetActorLocation(Me->GetActorLocation()+FVector(0.f,0.f,DieHeight));
+	GetWorld()->GetTimerManager().SetTimer(DestroyTimerHandle,this, &UMonsterFSM::DestroyOnLevel,5.f);
 }
 

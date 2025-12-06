@@ -7,6 +7,10 @@
 #include "GameFramework/Character.h"
 #include "DGSMonster.generated.h"
 
+class ADGSGameMode;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnMonsterHPChanged, int32, CurPistol, int32, CurRifle, int32, MaxPistol,
+                                              int32, MaxRifle);
+
 UCLASS()
 class ADGSMonster : public ACharacter
 {
@@ -18,6 +22,12 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FSMComponent")
 	class UMonsterFSM* FSM;
+
+	UPROPERTY(VisibleAnywhere, Category = "UI")
+	class UWidgetComponent* HPBarWidget;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnMonsterHPChanged OnHPChanged;
 	
 protected:
 	// Called when the game starts or when spawned
@@ -27,8 +37,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Monster Stat")
 	EMonsterType MonsterType = EMonsterType::PistolWeak;
@@ -48,4 +56,10 @@ public:
 private:
 	UFUNCTION()
 	void MonsterOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UPROPERTY(EditDefaultsOnly, Category="VFX")
+	class UParticleSystem* ExplosionFX;
+
+	UPROPERTY()
+	TObjectPtr<ADGSGameMode> GameMode;
 };

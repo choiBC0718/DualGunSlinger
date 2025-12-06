@@ -7,43 +7,59 @@
 #include "DGSPlayer.h"
 #include "MonsterFSM.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Framework/DGSGameMode.h"
+#include "GameFramework/GameMode.h"
+#include "Kismet/GameplayStatics.h"
+#include "Widget/MonsterWidget.h"
 
-// Sets default values
+
 ADGSMonster::ADGSMonster()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCapsuleComponent()->SetCollisionProfileName("Enemy");
 
 	FSM=CreateDefaultSubobject<UMonsterFSM>("FSM");
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+
+	HPBarWidget=CreateDefaultSubobject<UWidgetComponent>("HPBarWidget");
+	HPBarWidget->SetupAttachment(GetRootComponent());
+	HPBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
 }
 
-// Called when the game starts or when spawned
 void ADGSMonster::BeginPlay()
 {
 	Super::BeginPlay();
 
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ADGSMonster::MonsterOverlap);
+
+	if (HPBarWidget)
+	{
+		UMonsterWidget* MonsterWidget = Cast<UMonsterWidget>(HPBarWidget->GetUserWidgetObject());
+		if (MonsterWidget)
+		{
+			MonsterWidget->OwnerMonster=this;
+			MonsterWidget->Init();
+		}
+	}
 	CurPistolHP=MaxPistolHP;
 	CurRifleHP=MaxRifleHP;
 	bIsDead=false;
+	OnHPChanged.Broadcast(CurPistolHP, CurRifleHP, MaxPistolHP, MaxRifleHP);
+
+	AGameModeBase* CurGameMode = GetWorld()->GetAuthGameMode();
+	if (CurGameMode)
+	{
+		GameMode=Cast<ADGSGameMode>(CurGameMode);
+	}
 }
 
-// Called every frame
 void ADGSMonster::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
-// Called to bind functionality to input
-void ADGSMonster::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-}
 
 void ADGSMonster::MonsterHit(EGunType GunType)
 {
@@ -55,9 +71,20 @@ void ADGSMonster::MonsterHit(EGunType GunType)
 	case EMonsterType::PistolWeak:
 		if (GunType == EGunType::Pistol)
 		{
-			CurPistolHP--;
+			if (CurPistolHP>=1)
+			{
+				CurPistolHP--;
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionFX,GetActorLocation(),GetActorRotation());
+				OnHPChanged.Broadcast(CurPistolHP, CurRifleHP, MaxPistolHP, MaxRifleHP);
+			}
 			if (CurPistolHP<=0)
+			{
 				bIsDead=true;
+				if (GameMode)
+				{
+					GameMode->AddScore(10);
+				}
+			}
 		}
 		else
 		{
@@ -68,9 +95,20 @@ void ADGSMonster::MonsterHit(EGunType GunType)
 	case EMonsterType::RifleWeak:
 		if (GunType == EGunType::Rifle)
 		{
-			CurRifleHP--;
+			if (CurRifleHP>=1)
+			{
+				CurRifleHP--;
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionFX,GetActorLocation(),GetActorRotation());
+				OnHPChanged.Broadcast(CurPistolHP, CurRifleHP, MaxPistolHP, MaxRifleHP);
+			}
 			if (CurRifleHP<=0)
+			{
 				bIsDead=true;
+				if (GameMode)
+				{
+					GameMode->AddScore(10);
+				}
+			}
 		}
 		else
 		{
@@ -81,15 +119,31 @@ void ADGSMonster::MonsterHit(EGunType GunType)
 	case EMonsterType::Hybrid:
 		if (GunType==EGunType::Rifle)
 		{
-			CurRifleHP--;
+			if (CurRifleHP>=1)
+			{
+				CurRifleHP--;
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionFX,GetActorLocation(),GetActorRotation());
+				OnHPChanged.Broadcast(CurPistolHP, CurRifleHP, MaxPistolHP, MaxRifleHP);
+			}
 		}
 		else if (GunType==EGunType::Pistol)
 		{
-			CurPistolHP--;
+			if (CurPistolHP>=1)
+			{
+				CurPistolHP--;
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionFX,GetActorLocation(),GetActorRotation());
+				OnHPChanged.Broadcast(CurPistolHP, CurRifleHP, MaxPistolHP, MaxRifleHP);
+			}
 		}
 
 		if (CurPistolHP<=0 && CurRifleHP<=0)
+		{
 			bIsDead=true;
+			if (GameMode)
+			{
+				GameMode->AddScore(30);
+			}
+		}
 		break;
 	}
 	if (bIsDead)
@@ -104,10 +158,6 @@ void ADGSMonster::MonsterHit(EGunType GunType)
 void ADGSMonster::MonsterOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                  UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	ABullet* Bullet = Cast<ABullet>(OtherActor);
-	if (Bullet)
-	{
-		MonsterHit(Bullet->BulletType);
-	}
+
 }
 

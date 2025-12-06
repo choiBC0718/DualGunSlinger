@@ -12,7 +12,6 @@ enum class EEnemyState : uint8
 	Idle,
 	Move,
 	Attack,
-	Damage,
 	Die
 };
 
@@ -28,7 +27,6 @@ public:
 	void IdleState();
 	void MoveState();
 	void AttackState();
-	void DamageState();
 	void DestroyOnLevel();
 	void DieState();
 
@@ -53,9 +51,11 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="FSM")
 	float AttackDelayTime =2.f;
 	UPROPERTY(EditDefaultsOnly, Category="FSM")
-	float DamageDelayTime =2.f;
-	UPROPERTY(EditDefaultsOnly, Category="FSM")
 	float MoveSpeedRate =0.1f;
+	UPROPERTY(EditDefaultsOnly, Category="FSM")
+	float DieHeight = -50.f;
+	UPROPERTY(EditDefaultsOnly, Category="FSM")
+	float DieSpeed = 5.f;
 	
 	float CurrentTime=0.f;
 

@@ -57,7 +57,10 @@ ADGSPlayer::ADGSPlayer()
 void ADGSPlayer::BeginPlay()
 {
 	Super::BeginPlay();
+	
 	bIsRifleMode=true;
+	CurrentHp=MaxHealth;
+	
 	GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
 	APlayerController* PC = Cast<APlayerController>(GetController());
 	if (PC)
@@ -122,18 +125,19 @@ void ADGSPlayer::Move(const FInputActionValue& InputActionValue)
 	AddMovementInput(GetActorForwardVector()*InputVal.X + GetActorRightVector()*InputVal.Y);
 }
 
+
 void ADGSPlayer::PlayerOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	ADGSMonster* Monster = Cast<ADGSMonster>(OtherActor);
-	if (Monster)
+}
+
+void ADGSPlayer::GetDamaged()
+{
+	CurrentHp--;
+	OnHPChanged.Broadcast(CurrentHp,MaxHealth);
+	if (CurrentHp <= 0)
 	{
-		Health--;
-		UE_LOG(LogTemp,Warning,TEXT("Current HP = %d"), Health);
-		if (Health <= 0)
-		{
-			Destroy();
-		}
+		Destroy();
 	}
 }
 

@@ -7,6 +7,8 @@
 #include "GameFramework/Character.h"
 #include "DGSPlayer.generated.h"
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerHPChanged, int32, CurrentHp, int32, MaxHp);
 UCLASS()
 class ADGSPlayer : public ACharacter
 {
@@ -26,6 +28,9 @@ public:
 	class USkeletalMeshComponent* PistolMesh;
 	UPROPERTY(VisibleAnywhere, Category="GunMesh")
 	class USkeletalMeshComponent* RifleMesh;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnPlayerHPChanged OnHPChanged;
 	
 protected:
 	// Called when the game starts or when spawned
@@ -56,18 +61,22 @@ private:
 	
 	FVector MoveDirection;
 	
-	UPROPERTY(EditDefaultsOnly, Category="Character")
-	int32 Health = 6;
-	UPROPERTY(EditDefaultsOnly, Category="Character")
+public:
+	UPROPERTY(EditDefaultsOnly, Category="Player Stat",BlueprintReadOnly)
+	int32 MaxHealth = 6;
+	UPROPERTY(VisibleAnywhere, Category = "Player Stat", BlueprintReadOnly)
+	int32 CurrentHp;
+	UPROPERTY(EditDefaultsOnly, Category="Player Stat",BlueprintReadOnly)
 	float MoveSpeed = 500.f;
-	UPROPERTY(EditDefaultsOnly, Category="Character")
+	UPROPERTY(EditDefaultsOnly, Category="Player Stat",BlueprintReadOnly)
 	float ShootRatio = 1.f;
-	float ShootTime=0.f;
-	UPROPERTY(EditDefaultsOnly, Category="Character")
+	UPROPERTY(EditDefaultsOnly, Category="Player Stat",BlueprintReadOnly)
 	float BulletSpeed = 320.f;
-	UPROPERTY(EditDefaultsOnly, Category="Character")
+	UPROPERTY(EditDefaultsOnly, Category="Player Stat",BlueprintReadOnly)
 	float BulletMaxDist = 1000.f;
 
+	float ShootTime=0.f;
+	
 	UPROPERTY(EditDefaultsOnly, Category="Bullet")
 	TSubclassOf<class ABullet> PistolBulletClass;
 
@@ -76,7 +85,8 @@ private:
 
 	UFUNCTION()
 	void PlayerOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-public:
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsRifleMode = true;
+
+	void GetDamaged();
 };
