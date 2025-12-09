@@ -9,6 +9,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Framework/DGSGameMode.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "Widget/MonsterWidget.h"
@@ -53,6 +54,12 @@ void ADGSMonster::BeginPlay()
 	{
 		GameMode=Cast<ADGSGameMode>(CurGameMode);
 	}
+	
+	float GameTime = GetWorld()->GetTimeSeconds();
+	float SpeedBonus = (GameTime / 60.0f) * 50.0f; 
+
+	float NewSpeed = FMath::Clamp(MoveSpeed+SpeedBonus, MoveSpeed, 800.0f);
+	GetCharacterMovement()->MaxWalkSpeed = NewSpeed;
 }
 
 void ADGSMonster::Tick(float DeltaTime)
@@ -74,7 +81,6 @@ void ADGSMonster::MonsterHit(EGunType GunType)
 			if (CurPistolHP>=1)
 			{
 				CurPistolHP--;
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionFX,GetActorLocation(),GetActorRotation());
 				OnHPChanged.Broadcast(CurPistolHP, CurRifleHP, MaxPistolHP, MaxRifleHP);
 			}
 			if (CurPistolHP<=0)
@@ -98,7 +104,6 @@ void ADGSMonster::MonsterHit(EGunType GunType)
 			if (CurRifleHP>=1)
 			{
 				CurRifleHP--;
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionFX,GetActorLocation(),GetActorRotation());
 				OnHPChanged.Broadcast(CurPistolHP, CurRifleHP, MaxPistolHP, MaxRifleHP);
 			}
 			if (CurRifleHP<=0)
@@ -122,7 +127,6 @@ void ADGSMonster::MonsterHit(EGunType GunType)
 			if (CurRifleHP>=1)
 			{
 				CurRifleHP--;
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionFX,GetActorLocation(),GetActorRotation());
 				OnHPChanged.Broadcast(CurPistolHP, CurRifleHP, MaxPistolHP, MaxRifleHP);
 			}
 		}
@@ -131,7 +135,6 @@ void ADGSMonster::MonsterHit(EGunType GunType)
 			if (CurPistolHP>=1)
 			{
 				CurPistolHP--;
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionFX,GetActorLocation(),GetActorRotation());
 				OnHPChanged.Broadcast(CurPistolHP, CurRifleHP, MaxPistolHP, MaxRifleHP);
 			}
 		}

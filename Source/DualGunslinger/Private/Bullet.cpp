@@ -5,6 +5,8 @@
 
 #include "Character/DGSMonster.h"
 #include "Components/SphereComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ABullet::ABullet()
@@ -20,28 +22,23 @@ ABullet::ABullet()
 	MeshComp=CreateDefaultSubobject<UStaticMeshComponent>("Mesh Component");
 	MeshComp->SetupAttachment(SphereComp);
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-}
 
-void ABullet::TravelMaxDist()
-{
-	Destroy();
+	MovementComp=CreateDefaultSubobject<UProjectileMovementComponent>("Projectile Movement");
 }
 
 // Called when the game starts or when spawned
 void ABullet::BeginPlay()
 {
 	Super::BeginPlay();
-
-	float Time = MaxDistance / MoveSpeed;
-	GetWorld()->GetTimerManager().SetTimer(BulletTimerHandle,this, &ABullet::TravelMaxDist,Time);
+	
 	SphereComp->OnComponentBeginOverlap.AddDynamic(this, &ABullet::OnBulletOverlap);
+	SphereComp->OnComponentHit.AddDynamic(this, &ABullet::OnHit);
 }
 
 // Called every frame
 void ABullet::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	SetActorLocation(GetActorLocation() + GetActorForwardVector()*MoveSpeed*DeltaTime);
 }
 
 void ABullet::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -50,8 +47,16 @@ void ABullet::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 	ADGSMonster* Monster = Cast<ADGSMonster>(OtherActor);
 	if (Monster)
 	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionFX,GetActorLocation(),GetActorRotation());
+		UGameplayStatics::PlaySound2D(GetWorld(),BulletSound);
 		Monster->MonsterHit(BulletType);
-		Destroy();
 	}
+	Destroy();
+}
+
+void ABullet::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	FVector NormalImpulse, const FHitResult& Hit)
+{
+	Destroy();
 }
 

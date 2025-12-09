@@ -5,6 +5,7 @@
 
 #include "DGSMonster.h"
 #include "DGSPlayer.h"
+#include "Item.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -44,7 +45,7 @@ void UMonsterFSM::MoveState()
 	}
 	FVector Destination = Target->GetActorLocation();
 	FVector Direction = Destination - Me->GetActorLocation();
-	Me->AddMovementInput(Direction.GetSafeNormal(),MoveSpeedRate);
+	Me->AddMovementInput(Direction.GetSafeNormal(), 1.0f);
 
 	if (Direction.Size() < AttackRange)
 	{
@@ -54,9 +55,16 @@ void UMonsterFSM::MoveState()
 
 void UMonsterFSM::AttackState()
 {
+	if (!Target)
+		return;
+	if (Target->bIsDead)
+		mState=EEnemyState::Idle;
+	
 	CurrentTime += GetWorld()->DeltaTimeSeconds;
 	if (CurrentTime>AttackDelayTime)
 	{
+		FVector Direction = Target->GetActorLocation() - Me->GetActorLocation();
+		Me->SetActorRotation(Direction.Rotation());
 		CurrentTime = 0.f;
 		Target->GetDamaged();
 		if ((Target->GetActorLocation() - Me->GetActorLocation()).Size() > AttackRange)
@@ -116,5 +124,17 @@ void UMonsterFSM::OnDamageProcess()
 	Me->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Me->SetActorLocation(Me->GetActorLocation()+FVector(0.f,0.f,DieHeight));
 	GetWorld()->GetTimerManager().SetTimer(DestroyTimerHandle,this, &UMonsterFSM::DestroyOnLevel,5.f);
+
+	if (Target && FMath::RandRange(1,100) <= Target->ItemDropP)
+	{
+		if (Me->Items.Num()>0)
+		{
+			int32 RandIdx = FMath::RandRange(0,Me->Items.Num()-1);
+			if (Me->Items[RandIdx])
+			{
+				GetWorld()->SpawnActor<AItem>(Me->Items[RandIdx],Me->GetActorLocation(), Me->GetActorRotation());
+			}
+		}
+	}
 }
 

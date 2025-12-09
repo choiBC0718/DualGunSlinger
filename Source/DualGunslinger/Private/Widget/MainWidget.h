@@ -15,6 +15,8 @@ class UMainWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 	
 	UPROPERTY(EditAnywhere, meta=(BindWidget))
 	class UTextBlock* ScoreText;
@@ -22,4 +24,11 @@ public:
 	class UTextBlock* BestScoreText;
 	UPROPERTY(EditAnywhere, meta=(BindWidget))
 	class UTextBlock* TimeText;
+
+	FTimerHandle TimerHandle;
+	
+	void Timer();
+	float GameStartTime;
+
+	FString PlayTime;
 };

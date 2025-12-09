@@ -18,3 +18,12 @@ enum class EMonsterType : uint8
 	RifleWeak,
 	Hybrid
 };
+
+UENUM(BlueprintType)
+enum class EItemType : uint8
+{
+	WalkSpeedItem,
+	BulletSpeedItem,
+	SpawnRateItem,
+	HealthItem,
+};

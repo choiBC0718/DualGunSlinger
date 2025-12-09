@@ -9,12 +9,17 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Item.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "DualGunslinger/DualGunslinger.h"
+#include "Framework/DGSGameMode.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/GameModeBase.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Widget/GameOverWidget.h"
+#include "Widget/MainWidget.h"
 
 // Sets default values
 ADGSPlayer::ADGSPlayer()
@@ -68,6 +73,7 @@ void ADGSPlayer::BeginPlay()
 	APlayerController* PC = Cast<APlayerController>(GetController());
 	if (PC)
 	{
+		PC->SetInputMode(FInputModeGameOnly());
 		UEnhancedInputLocalPlayerSubsystem* SubSystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
 		if (SubSystem)
 		{
@@ -89,10 +95,7 @@ void ADGSPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (ShootTime < ShootRatio)
-	{
-		ShootTime += DeltaTime;
-	}
+	ShootTime += DeltaTime;
 }
 
 // Called to bind functionality to input
@@ -137,6 +140,31 @@ void ADGSPlayer::Move(const FInputActionValue& InputActionValue)
 void ADGSPlayer::PlayerOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	AItem* Item = Cast<AItem>(OtherActor);
+	if (Item)
+	{
+		switch (Item->ItemType)
+		{
+		case EItemType::WalkSpeedItem:
+			MoveSpeed += 20.f;
+			GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+			break;
+		case EItemType::BulletSpeedItem:
+			BulletSpeed += 25.f;
+			break;
+		case EItemType::SpawnRateItem:
+			ShootRate += 0.1f;
+			break;
+		case EItemType::HealthItem:
+			if (CurrentHp<MaxHealth)
+				CurrentHp++;
+			break;
+		}
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),ItemEatFX,GetActorLocation());
+		UGameplayStatics::PlaySound2D(GetWorld(),ItemEatSound);
+		
+		OtherActor->Destroy();
+	}
 }
 
 void ADGSPlayer::GetDamaged()
@@ -148,15 +176,29 @@ void ADGSPlayer::GetDamaged()
 	OnHPChanged.Broadcast(CurrentHp,MaxHealth);
 	if (CurrentHp <= 0)
 	{
+		if (GetCharacterMovement())
+		{
+			GetCharacterMovement()->MaxWalkSpeed = 0.f;
+		}
 		bIsDead=true;
 		UWidgetLayoutLibrary::RemoveAllWidgets(GetWorld());
+
+		AGameModeBase* CurGameMode = GetWorld()->GetAuthGameMode();
+		if (!CurGameMode)
+			return;
+		ADGSGameMode* GameMode = Cast<ADGSGameMode>(CurGameMode);
+		if (!GameMode)
+			return;
+		int32 FinishScore=GameMode->GetScore();
+		FString PlayTime = GameMode->MainWidget->PlayTime;
+		GameOverWidget->InitGameOver(FinishScore,PlayTime);
 		GameOverWidget->AddToViewport();
 		APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
 		if (PlayerController)
 		{
 			PlayerController->bShowMouseCursor = true;
+			PlayerController->SetInputMode(FInputModeUIOnly());
 		}
-		//UGameplayStatics::SetGamePaused(GetWorld(),true);
 	}
 }
 
@@ -171,7 +213,9 @@ void ADGSPlayer::Shoot(const FInputActionValue& InputActionValue)
 	else if (InputVal.X>0)	GetMesh()->SetRelativeRotation(FRotator(0,-90,0));
 	else if (InputVal.X<0)	GetMesh()->SetRelativeRotation(FRotator(0,90,0));
 
-	if (ShootTime < ShootRatio)
+	float ActualFireRate = FMath::Max(ShootRate,0.1f);
+	float ShootDelay = 1.f / ActualFireRate;
+	if (ShootTime < ShootDelay)
 		return;
 	
 	USkeletalMeshComponent* CurrentGunMesh = bIsRifleMode ? RifleMesh : PistolMesh;
@@ -190,8 +234,9 @@ void ADGSPlayer::Shoot(const FInputActionValue& InputActionValue)
 		if (SpawnBullet)
 		{
 			SpawnBullet->BulletType = bIsRifleMode ? EGunType::Rifle : EGunType::Pistol;
-			SpawnBullet->MaxDistance = BulletMaxDist;
 			SpawnBullet->MoveSpeed = BulletSpeed;
+			SpawnBullet->MovementComp->InitialSpeed = BulletSpeed;
+			SpawnBullet->MovementComp->MaxSpeed = BulletSpeed;
 
 			UGameplayStatics::FinishSpawningActor(SpawnBullet,SpawnTrans);
 			ShootTime = 0.f;

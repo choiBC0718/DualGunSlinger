@@ -4,6 +4,7 @@
 #include "Widget/GameOverWidget.h"
 
 #include "Components/Button.h"
+#include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -24,4 +25,12 @@ void UGameOverWidget::Restart()
 void UGameOverWidget::Quit()
 {
 	UKismetSystemLibrary::QuitGame(GetWorld(), GetWorld()->GetFirstPlayerController(),EQuitPreference::Quit,false);
+}
+
+void UGameOverWidget::InitGameOver(int32 Score, FString TimeString)
+{
+	if (ScoreText)
+		ScoreText->SetText(FText::AsNumber(Score));
+	if (PlayTime)
+		PlayTime->SetText(FText::FromString(TimeString));
 }

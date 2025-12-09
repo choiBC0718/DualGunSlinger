@@ -51,8 +51,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="FSM")
 	float AttackDelayTime =2.f;
 	UPROPERTY(EditDefaultsOnly, Category="FSM")
-	float MoveSpeedRate =0.1f;
-	UPROPERTY(EditDefaultsOnly, Category="FSM")
 	float DieHeight = -50.f;
 	UPROPERTY(EditDefaultsOnly, Category="FSM")
 	float DieSpeed = 5.f;

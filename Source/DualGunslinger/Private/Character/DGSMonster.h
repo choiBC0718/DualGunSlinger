@@ -45,6 +45,8 @@ public:
 	int32 MaxPistolHP = 3;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster Stat")
 	int32 MaxRifleHP = 3;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Monster Stat")
+	float MoveSpeed = 120.f;
 
 	int32 CurPistolHP;
 	int32 CurRifleHP;
@@ -53,13 +55,13 @@ public:
 	bool bIsDead=false;
 
 	void MonsterHit(EGunType GunType);
+
+	UPROPERTY(EditDefaultsOnly, Category="Item")
+	TArray<TSubclassOf<class AItem>> Items;
 private:
 	UFUNCTION()
 	void MonsterOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	UPROPERTY(EditDefaultsOnly, Category="VFX")
-	class UParticleSystem* ExplosionFX;
-
+	
 	UPROPERTY()
 	TObjectPtr<ADGSGameMode> GameMode;
 };

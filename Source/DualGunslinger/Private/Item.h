@@ -4,17 +4,24 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "MonsterFactory.generated.h"
+#include "Item.generated.h"
+
+enum class EItemType : uint8;
 
 UCLASS()
-class AMonsterFactory : public AActor
+class AItem : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	AMonsterFactory();
+	AItem();
 
+	UPROPERTY(VisibleAnywhere, Category="Components")
+	class USphereComponent* SphereComp;
+	UPROPERTY(VisibleAnywhere, Category="Components")
+	class UStaticMeshComponent* MeshComp;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -22,12 +29,7 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	
-	float SpawnDelay;
-	
-	UPROPERTY(EditDefaultsOnly, Category="Spawn")
-	TArray<TSubclassOf<class ADGSMonster>> MonsterClass;
 
-private:
-	float SpawnMonsterTime=0.f;
+	UPROPERTY(EditDefaultsOnly)
+	EItemType ItemType;
 };

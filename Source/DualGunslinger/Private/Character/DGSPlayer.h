@@ -69,11 +69,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Player Stat",BlueprintReadOnly)
 	float MoveSpeed = 500.f;
 	UPROPERTY(EditDefaultsOnly, Category="Player Stat",BlueprintReadOnly)
-	float ShootRatio = 1.f;
+	float ShootRate = 0.8f;
 	UPROPERTY(EditDefaultsOnly, Category="Player Stat",BlueprintReadOnly)
-	float BulletSpeed = 320.f;
+	float BulletSpeed = 1500.f;
 	UPROPERTY(EditDefaultsOnly, Category="Player Stat",BlueprintReadOnly)
-	float BulletMaxDist = 1000.f;
+	float ItemDropP = 10.f;
 
 	float ShootTime=0.f;
 	
@@ -97,4 +97,9 @@ private:
 	TSubclassOf<class UGameOverWidget> GameOverClass;
 	UPROPERTY()
 	class UGameOverWidget* GameOverWidget;
+
+	UPROPERTY(EditDefaultsOnly, Category="VFX")
+	UParticleSystem* ItemEatFX;
+	UPROPERTY(EditDefaultsOnly, Category="VFX")
+	USoundBase* ItemEatSound;
 };

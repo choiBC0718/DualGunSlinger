@@ -20,6 +20,8 @@ public:
 	
 	UPROPERTY(EditAnywhere, meta=(BindWidget))
 	class UTextBlock* ScoreText;
+	UPROPERTY(EditAnywhere, meta=(BindWidget))
+	class UTextBlock* PlayTime;
 
 	UPROPERTY(EditAnywhere, meta=(BindWidget))
 	class UButton* RestartBtn;
@@ -31,4 +33,6 @@ public:
 
 	UFUNCTION()
 	void Quit();
+
+	void InitGameOver(int32 Score, FString TimeString);
 };

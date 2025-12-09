@@ -17,7 +17,8 @@ AMonsterFactory::AMonsterFactory()
 void AMonsterFactory::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	SpawnDelay = FMath::RandRange(1.f, 15.f);
 }
 
 // Called every frame
@@ -32,8 +33,15 @@ void AMonsterFactory::Tick(float DeltaTime)
 	{
 		SpawnMonsterTime=0.f;
 		int32 RandIdx = FMath::RandRange(0, MonsterClass.Num()-1);
-		ADGSMonster* SpawnMonster = GetWorld()->SpawnActor<ADGSMonster>(MonsterClass[RandIdx],GetActorLocation(),GetActorRotation());
-		SpawnDelay = FMath::RandRange(4.5f, 9.0f);
+		GetWorld()->SpawnActor<ADGSMonster>(MonsterClass[RandIdx],GetActorLocation(),GetActorRotation());
+
+		float GameTime = GetWorld()->GetTimeSeconds();
+		float DelayReduction = (GameTime / 60.0f) * 0.5f;
+		
+		float MinDelay = FMath::Max(1.0f, 4.5f - DelayReduction);
+		float MaxDelay = FMath::Max(2.0f, 9.0f - DelayReduction);
+		
+		SpawnDelay = FMath::RandRange(MinDelay, MaxDelay);
 	}
 }
 

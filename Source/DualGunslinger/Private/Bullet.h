@@ -19,6 +19,8 @@ public:
 	class USphereComponent* SphereComp;
 	UPROPERTY(VisibleAnywhere, Category="Components")
 	class UStaticMeshComponent* MeshComp;
+	UPROPERTY(VisibleAnywhere, Category="Components")
+	class UProjectileMovementComponent* MovementComp;
 
 protected:
 	// Called when the game starts or when spawned
@@ -30,11 +32,14 @@ public:
 
 	EGunType BulletType;
 	float MoveSpeed;
-	float MaxDistance;
-private:
-	void TravelMaxDist();
-	FTimerHandle BulletTimerHandle;
 
+	UPROPERTY(EditDefaultsOnly, Category="VFX")
+	class UParticleSystem* ExplosionFX;
+	UPROPERTY(EditDefaultsOnly, Category="VFX")
+	USoundBase* BulletSound;
+private:
 	UFUNCTION()
 	void OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 };
