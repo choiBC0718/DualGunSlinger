@@ -15,8 +15,11 @@ class UMainWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	
 	UPROPERTY(EditAnywhere, meta=(BindWidget))
 	class UTextBlock* ScoreText;
+	UPROPERTY(EditAnywhere, meta=(BindWidget))
+	class UTextBlock* BestScoreText;
 	UPROPERTY(EditAnywhere, meta=(BindWidget))
 	class UTextBlock* TimeText;
 };

@@ -9,10 +9,12 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "DualGunslinger/DualGunslinger.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Widget/GameOverWidget.h"
 
 // Sets default values
 ADGSPlayer::ADGSPlayer()
@@ -57,7 +59,8 @@ ADGSPlayer::ADGSPlayer()
 void ADGSPlayer::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	bIsDead=false;
 	bIsRifleMode=true;
 	CurrentHp=MaxHealth;
 	
@@ -74,6 +77,11 @@ void ADGSPlayer::BeginPlay()
 	}
 
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ADGSPlayer::PlayerOverlap);
+
+	if (GameOverClass)
+	{
+		GameOverWidget=CreateWidget<UGameOverWidget>(GetWorld(),GameOverClass);
+	}
 }
 
 // Called every frame
@@ -133,11 +141,22 @@ void ADGSPlayer::PlayerOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 
 void ADGSPlayer::GetDamaged()
 {
+	if (bIsDead)
+		return;
+	
 	CurrentHp--;
 	OnHPChanged.Broadcast(CurrentHp,MaxHealth);
 	if (CurrentHp <= 0)
 	{
-		Destroy();
+		bIsDead=true;
+		UWidgetLayoutLibrary::RemoveAllWidgets(GetWorld());
+		GameOverWidget->AddToViewport();
+		APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+		if (PlayerController)
+		{
+			PlayerController->bShowMouseCursor = true;
+		}
+		//UGameplayStatics::SetGamePaused(GetWorld(),true);
 	}
 }
 

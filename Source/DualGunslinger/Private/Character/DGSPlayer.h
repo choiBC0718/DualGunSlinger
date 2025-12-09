@@ -89,4 +89,12 @@ public:
 	bool bIsRifleMode = true;
 
 	void GetDamaged();
+
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsDead=false;
+private:
+	UPROPERTY(EditDefaultsOnly, Category="Widget")
+	TSubclassOf<class UGameOverWidget> GameOverClass;
+	UPROPERTY()
+	class UGameOverWidget* GameOverWidget;
 };

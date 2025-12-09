@@ -20,11 +20,17 @@ UMonsterFSM::UMonsterFSM()
 
 void UMonsterFSM::IdleState()
 {
-	CurrentTime += GetWorld()->DeltaTimeSeconds;
-	if (CurrentTime > IdleDelayTime)
+	if (!Target)
+		return;
+
+	if (!Target->bIsDead)
 	{
-		mState = EEnemyState::Move;
-		CurrentTime = 0.f;
+		CurrentTime += GetWorld()->DeltaTimeSeconds;
+		if (CurrentTime > IdleDelayTime)
+		{
+			mState = EEnemyState::Move;
+			CurrentTime = 0.f;
+		}
 	}
 }
 
@@ -32,7 +38,10 @@ void UMonsterFSM::MoveState()
 {
 	if (!Target)
 		return;
-	
+	if (Target->bIsDead)
+	{
+		mState=EEnemyState::Idle;
+	}
 	FVector Destination = Target->GetActorLocation();
 	FVector Direction = Destination - Me->GetActorLocation();
 	Me->AddMovementInput(Direction.GetSafeNormal(),MoveSpeedRate);
